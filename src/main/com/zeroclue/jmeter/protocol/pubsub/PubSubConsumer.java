@@ -1,112 +1,142 @@
-// package com.zeroclue.jmeter.protocol.pubsub;
+package com.zeroclue.jmeter.protocol.pubsub;
 
-// import com.google.cloud.pubsub.v1.Subscriber;
+import com.google.cloud.pubsub.v1.AckReplyConsumer;
+import com.google.cloud.pubsub.v1.MessageReceiver;
+import com.google.cloud.pubsub.v1.Subscriber;
+import com.google.pubsub.v1.ProjectSubscriptionName;
+import com.google.pubsub.v1.PubsubMessage;
 
-// import org.apache.jmeter.samplers.Entry;
-// import org.apache.jmeter.samplers.Interruptible;
-// import org.apache.jmeter.samplers.SampleResult;
-// import org.apache.jmeter.testelement.TestStateListener;
-// import org.apache.jorphan.logging.LoggingManager;
-// import org.apache.log.Logger;
+import org.apache.jmeter.samplers.Entry;
+import org.apache.jmeter.samplers.Interruptible;
+import org.apache.jmeter.samplers.SampleResult;
+import org.apache.jmeter.testelement.TestStateListener;
+import org.apache.jorphan.logging.LoggingManager;
+import org.apache.log.Logger;
 
-// public class PubSubConsumer extends PubSubSampler implements Interruptible, TestStateListener {
+import java.io.IOException;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 
-//     private Subscriber subscriber;
+public class PubSubConsumer extends PubSubSampler implements Interruptible, TestStateListener {
 
-//     public PubSubConsumer() {
-//         super();
-//     }
+    private Subscriber consumer;
 
-//     @Override
-//     public SampleResult sample(Entry entry) {
-//         SampleResult result = new SampleResult();
-//         result.setSampleLabel(getName());
-//         result.setSuccessful(false);
-//         result.setResponseCode("500");
+    //++ These are JMX names, and must not be changed
+    private final static String PROJECT_ID = "PubSubConsumer.ProjectId";
+    private final static String SUBSCRIPTION_NAME = "PubSubConsumer.SubscriptionName";
 
-//         trace("PubSubConsumer.sample()");
+    private static final Logger logger = LoggingManager.getLoggerForClass();
+    public static final BlockingQueue<PubsubMessage> receivedMessages = new LinkedBlockingDeque<PubsubMessage>();
 
-//         try {
-//             subscriber = Subscriber.newBuilder(subscriptionName, new MessageReceiverImpl()).build();
-            
+    public PubSubConsumer() {
+        super();
+    }
 
-//             // only do this once per thread. Otherwise it slows down the consumption by appx 50%
-//             if (consumer == null) {
-//                 log.info("Creating consumer");
-//                 consumer = new QueueingConsumer(channel);
-//             }
-//             if (consumerTag == null) {
-//                 log.info("Starting basic consumer");
-//                 consumerTag = channel.basicConsume(getQueue(), autoAck(), consumer);
-//             }
-//         } catch (Exception ex) {
-//             log.error("Failed to initialize channel", ex);
-//             result.setResponseMessage(ex.toString());
-//             return result;
-//         }
+    @Override
+    public SampleResult sample(Entry entry) {
+        SampleResult result = new SampleResult();
+        result.setSampleLabel(getName());
+        result.setSuccessful(false);
+        result.setResponseCode("500"); // internal error status
 
-//         // aggregate samples.
-//         int loop = getIterationsAsInt();
-//         result.sampleStart(); // Start timing
-//         try {
-//             for (int idx = 0; idx < loop; idx++) {
-//                 delivery = consumer.nextDelivery(getReceiveTimeoutAsInt());
+        MessageReceiver receiver = new MessageReceiver() {
 
-//                 if(delivery == null){
-//                     result.setResponseMessage("timed out");
-//                     return result;
-//                 }
+            @Override
+            public void receiveMessage(PubsubMessage message, AckReplyConsumer consumer) {
+                consumer.ack();
+                receivedMessages.offer(message);
+            }
+        };
 
-//                 /*
-//                  * Set up the sample result details
-//                  */
-//                 if (getReadResponseAsBoolean()) {
-//                     String response = new String(delivery.getBody());
-//                     result.setSamplerData(response);
-//                     result.setResponseMessage(response);
-//                 }
-//                 else {
-//                     result.setSamplerData("Read response is false.");
-//                 }
+        ProjectSubscriptionName subscriptionName = ProjectSubscriptionName.of(getProjectId(), getSubscriptionName());
+        // create the consumer
+        try {
+            if (consumer == null) {
+                logger.info("Creating PubSub consumer");
+                consumer = Subscriber.newBuilder(subscriptionName, receiver).build();
+            }
+        } catch (Exception ex) {
+            logger.error("Failed to initialize PubSub consumer", ex);
+            result.setResponseMessage(ex.toString());
+            return result;
+        }
 
-//                 if(!autoAck())
-//                     channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
-//             }
+        // start receiving messages / aggregate samples.
+        int loop = getIterationsAsInt();
+        result.sampleStart(); // Start timing
+        try {
+            consumer.startAsync().awaitRunning();
+            int count = 0;
+            while(count < loop) {
+                PubsubMessage message = receivedMessages.take();
+                
+                result.setResponseData("OK", null);
+                result.setDataType(SampleResult.TEXT);
+                result.setResponseCodeOK();
+                result.setSuccessful(true);
 
-//             result.setResponseData("OK", null);
-//             result.setDataType(SampleResult.TEXT);
+                count++;
+            }
+            consumer.stopAsync();
+        } catch (Exception ex) { // this is how we say we've received all messages
+            consumer = null;
+            logger.warn("PubSub consumer failed to consume", ex);
+            result.setResponseCode("500"); // internal error status
+            result.setResponseMessage(ex.getMessage());
+        } finally {
+            result.sampleEnd(); // End timimg
+        }
 
-//             result.setResponseCodeOK();
-//             result.setSuccessful(true);
-//         } catch (ShutdownSignalException e) {
-//             consumer = null;
-//             log.warn("PubSub consumer failed to consume", e);
-//             result.setResponseCode("400");
-//             result.setResponseMessage(e.getMessage());
-//             interrupt();
-//         } catch (ConsumerCancelledException e) {
-//             consumer = null;
-//             log.warn("PubSub consumer failed to consume", e);
-//             result.setResponseCode("300");
-//             result.setResponseMessage(e.getMessage());
-//             interrupt();
-//         } catch (InterruptedException e) {
-//             consumer = null;
-//             log.info("interuppted while attempting to consume");
-//             result.setResponseCode("200");
-//             result.setResponseMessage(e.getMessage());
-//         } catch (IOException e) {
-//             consumer = null;
-//             log.warn("PubSub consumer failed to consume", e);
-//             result.setResponseCode("100");
-//             result.setResponseMessage(e.getMessage());
-//         } finally {
-//             result.sampleEnd(); // End timimg
-//         }
+        // trace("PubSubConsumer.sample ended");
 
-//         trace("PubSubConsumer.sample ended");
+        return result;
+    }
 
-//         return result;
-//     }
 
-// }
+
+
+    /**
+     * @return the name of the topic for the sample
+     */
+    public String getSubscriptionName() {
+        return getPropertyAsString(SUBSCRIPTION_NAME);
+    }
+
+    public void setSubscriptionName(String name) {
+        setProperty(SUBSCRIPTION_NAME, name);
+    }
+
+    /**
+     * @return the project id for the sample
+     */
+    public String getProjectId() {
+        return getPropertyAsString(PROJECT_ID);
+    }
+
+    public void setProjectId(String id) {
+        setProperty(PROJECT_ID, id);
+    }
+
+
+    @Override
+    public boolean interrupt() {
+        testEnded();
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void testEnded() {}
+
+    @Override
+    public void testEnded(String arg0) {}
+
+    @Override
+    public void testStarted() {}
+
+    @Override
+    public void testStarted(String arg0) {}
+
+}

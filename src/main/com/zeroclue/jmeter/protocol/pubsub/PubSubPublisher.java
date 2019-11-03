@@ -44,7 +44,7 @@ public class PubSubPublisher extends PubSubSampler implements Interruptible {
     private final static String PROJECT_ID = "PubSubPublisher.ProjectId";
     private final static String TOPIC_NAME = "PubSubPublisher.TopicName";
 
-    private static final Logger log = LoggingManager.getLoggerForClass();
+    private static final Logger logger = LoggingManager.getLoggerForClass();
 
 
     public PubSubPublisher() {
@@ -56,7 +56,7 @@ public class PubSubPublisher extends PubSubSampler implements Interruptible {
         SampleResult result = new SampleResult();
         result.setSampleLabel(getName());
         result.setSuccessful(false);
-        result.setResponseCode("500");
+        result.setResponseCode("500"); // internal error status
 
         topic = ProjectTopicName.of(getProjectId(), getTopicName());
         
@@ -64,12 +64,13 @@ public class PubSubPublisher extends PubSubSampler implements Interruptible {
             // Create a publisher instance with default settings bound to the topic
             publisher = Publisher.newBuilder(topic).build();
         } catch (Exception ex) {
-            log.error("Failed to initialize channel : ", ex);
+            logger.error("Failed to create a publisher instance: ", ex);
             result.setResponseMessage(ex.toString());
             return result;
         }
         
         ByteString data = ByteString.copyFromUtf8(getMessage()); // Sampler data
+        PubsubMessage pubsubMessage = PubsubMessage.newBuilder().setData(data).build();
         
         result.setSampleLabel(getTitle());
         /*
@@ -81,10 +82,7 @@ public class PubSubPublisher extends PubSubSampler implements Interruptible {
         result.sampleStart(); // Start timing
         try {            
             
-            
             for (int idx = 0; idx < loop; idx++) {
-                PubsubMessage pubsubMessage = PubsubMessage.newBuilder().setData(data).build();
-                
                 // Once published, returns a server-assigned message id (unique within the topic)
                 ApiFuture<String> future = publisher.publish(pubsubMessage);
                 
@@ -104,15 +102,18 @@ public class PubSubPublisher extends PubSubSampler implements Interruptible {
             }
             
         } catch(Exception ex) {
-            log.debug(ex.getMessage(), ex);
-            result.setResponseCode("000");
+            logger.debug(ex.getMessage(), ex);
+            result.setResponseCode("500"); // internal error status
             result.setResponseMessage(ex.toString());
         } finally {
             result.sampleEnd();
             if (publisher != null) {
-                // When finished with the publisher, shutdown to free up resources.
-                publisher.shutdown();
-                // publisher.awaitTermination(1, TimeUnit.MINUTES);
+                publisher.shutdown(); // shutdown to free up resources
+                try {
+                    publisher.awaitTermination(1, TimeUnit.MINUTES);
+                } catch (InterruptedException ex) {
+                    logger.error("Interrupted when shuting down Publisher:", ex);
+                }
             }
             
             return result;
