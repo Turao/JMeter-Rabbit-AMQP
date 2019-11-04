@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 
 public class PubSubConsumer extends PubSubSampler implements Interruptible, TestStateListener {
 
@@ -45,6 +46,7 @@ public class PubSubConsumer extends PubSubSampler implements Interruptible, Test
 
             @Override
             public void receiveMessage(PubsubMessage message, AckReplyConsumer consumer) {
+                logger.info("Message received: " + message.toString());
                 consumer.ack();
                 receivedMessages.offer(message);
             }
@@ -65,28 +67,31 @@ public class PubSubConsumer extends PubSubSampler implements Interruptible, Test
 
         // start receiving messages / aggregate samples.
         int loop = getIterationsAsInt();
+        logger.info("Start sampling ("+ loop +" samples)");
         result.sampleStart(); // Start timing
         try {
-            consumer.startAsync().awaitRunning();
+            consumer.startAsync();
             int count = 0;
             while(count < loop) {
-                PubsubMessage message = receivedMessages.take();
-                
-                result.setResponseData("OK", null);
-                result.setDataType(SampleResult.TEXT);
-                result.setResponseCodeOK();
-                result.setSuccessful(true);
-
-                count++;
+                PubsubMessage message = receivedMessages.poll();
+                if (message != null) {
+                    result.setResponseData("OK", null);
+                    result.setDataType(SampleResult.TEXT);
+                    result.setResponseCodeOK();
+                    result.setSuccessful(true);
+    
+                    count++;
+                }
             }
-            consumer.stopAsync();
-        } catch (Exception ex) { // this is how we say we've received all messages
+        consumer.stopAsync().awaitTerminated(30, TimeUnit.SECONDS);
+        } catch (Exception ex) {
             consumer = null;
-            logger.warn("PubSub consumer failed to consume", ex);
+            logger.error("PubSub consumer failed to consume", ex);
             result.setResponseCode("500"); // internal error status
             result.setResponseMessage(ex.getMessage());
         } finally {
             result.sampleEnd(); // End timimg
+            logger.info("Sample ended! @ PubSubConsumer");
         }
 
         // trace("PubSubConsumer.sample ended");

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.1.1 r1855137">
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.2">
   <hashTree>
     <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="RPC Test Plan" enabled="true">
       <stringProp name="TestPlan.comments"></stringProp>
@@ -15,7 +15,7 @@
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
           <boolProp name="LoopController.continue_forever">false</boolProp>
-          <stringProp name="LoopController.loops">125</stringProp>
+          <stringProp name="LoopController.loops">1</stringProp>
         </elementProp>
         <stringProp name="ThreadGroup.num_threads">1</stringProp>
         <stringProp name="ThreadGroup.ramp_time">15</stringProp>
@@ -24,6 +24,7 @@
         <boolProp name="ThreadGroup.scheduler">false</boolProp>
         <stringProp name="ThreadGroup.duration"></stringProp>
         <stringProp name="ThreadGroup.delay"></stringProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
       </ThreadGroup>
       <hashTree>
         <RandomVariableConfig guiclass="TestBeanGUI" testclass="RandomVariableConfig" testname="Reply-To Queue Name" enabled="true">
@@ -53,7 +54,7 @@
             <stringProp name="PubSubSampler.Timeout">1000</stringProp>
             <stringProp name="PubSubSampler.Iterations">1</stringProp>
             <stringProp name="PubSubPublisher.ProjectId">sap-lx-lab</stringProp>
-            <stringProp name="PubSubPublisher.TopicName">load-test</stringProp>
+            <stringProp name="PubSubPublisher.TopicName">load-test-topic</stringProp>
             <stringProp name="PubSubPublisher.Message">{
         &quot;RequestMessageText&quot;: &apos;${uniqueId}&apos;
 }</stringProp>
@@ -62,6 +63,8 @@
           <com.zeroclue.jmeter.protocol.pubsub.PubSubConsumer guiclass="com.zeroclue.jmeter.protocol.pubsub.gui.PubSubConsumerGui" testclass="com.zeroclue.jmeter.protocol.pubsub.PubSubConsumer" testname="RPC Response" enabled="true">
             <stringProp name="PubSubSampler.Timeout">1000</stringProp>
             <stringProp name="PubSubSampler.Iterations">1</stringProp>
+            <stringProp name="PubSubConsumer.ProjectId">sap-lx-lab</stringProp>
+            <stringProp name="PubSubConsumer.SubscriptionName">load-test-subscription</stringProp>
           </com.zeroclue.jmeter.protocol.pubsub.PubSubConsumer>
           <hashTree/>
         </hashTree>
