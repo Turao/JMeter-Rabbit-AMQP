@@ -17,9 +17,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class PubSubPublisher extends PubSubSampler implements Interruptible {
-
+    
     private static final long serialVersionUID = 1L;
     
     private Publisher publisher;
@@ -29,10 +30,10 @@ public class PubSubPublisher extends PubSubSampler implements Interruptible {
     private final static String MESSAGE = "PubSubPublisher.Message";
     private final static String PROJECT_ID = "PubSubPublisher.ProjectId";
     private final static String TOPIC_NAME = "PubSubPublisher.TopicName";
-
+    
     private static final Logger logger = LoggerFactory.getLogger(PubSubPublisher.class);
-
-
+    
+    
     public PubSubPublisher() {
         super();
     }
@@ -43,7 +44,7 @@ public class PubSubPublisher extends PubSubSampler implements Interruptible {
         result.setSampleLabel(getName());
         result.setSuccessful(false);
         result.setResponseCode("500"); // internal error status
-
+        
         topic = ProjectTopicName.of(getProjectId(), getTopicName());
         
         try {
@@ -69,66 +70,70 @@ public class PubSubPublisher extends PubSubSampler implements Interruptible {
         logger.info("Start sampling ("+ loop +" samples)");
         List<ApiFuture<String>> futures = new ArrayList<ApiFuture<String>>();
         result.sampleStart(); // Start timing
-        try {            
+        try {
             for (int idx = 0; idx < loop; idx++) {
                 // Once published, returns a server-assigned message id (unique within the topic)
                 logger.info("Publishing message " + pubsubMessage.toString() + " to topic: " + getTopicName());
                 ApiFuture<String> future = publisher.publish(pubsubMessage);
                 futures.add(future);
             }
-            ApiFutures.allAsList(futures).get();
+            ApiFutures.allAsList(futures).get(); // wait for all messages to be published
         } catch(Exception ex) {
             logger.debug(ex.getMessage(), ex);
             result.setResponseCode("500"); // internal error status
             result.setResponseMessage(ex.toString());
         } finally {
+            result.sampleEnd(); // do we need to measure the time needed to shutdown the publisher?
+            logger.info("Sample ended! @ PubSubPublisher");
+            
             try {
+                logger.info("Shutting down Publisher");
                 publisher.shutdown();
+                publisher.awaitTermination(1, TimeUnit.MINUTES);
             } catch (Exception ex) {
                 logger.error("Failed to shut Publisher down: ", ex);
             }
-            result.sampleEnd();
-            logger.info("Sample ended! @ PubSubPublisher");
+            
         }
         return result;
     }
-
+    
     @Override
     public boolean interrupt() {
         cleanup();
         return true;
     }
-
+    
     /**
-     * @return the message for the sample
-     */
+    * @return the message for the sample
+    */
     public String getMessage() {
         return getPropertyAsString(MESSAGE);
     }
-
+    
     public void setMessage(String content) {
         setProperty(MESSAGE, content);
     }
-
-
+    
+    
     /**
-     * @return the name of the topic for the sample
-     */
+    * @return the name of the topic for the sample
+    */
     public String getTopicName() {
         return getPropertyAsString(TOPIC_NAME);
     }
-
+    
     public void setTopicName(String name) {
         setProperty(TOPIC_NAME, name);
     }
-
+    
     /**
-     * @return the project id for the sample
-     */
+    * @return the project id for the sample
+    */
     public String getProjectId() {
         return getPropertyAsString(PROJECT_ID);
     }
-
+    
     public void setProjectId(String id) {
         setProperty(PROJECT_ID, id);
     }
