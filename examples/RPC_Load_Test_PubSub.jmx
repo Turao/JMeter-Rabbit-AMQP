@@ -34,7 +34,7 @@
           <stringProp name="randomSeed"></stringProp>
           <boolProp name="perThread">false</boolProp>
         </RandomVariableConfig> -->
-        <hashTree/>
+        <!-- <hashTree/> -->
         <RandomVariableConfig guiclass="TestBeanGUI" testclass="RandomVariableConfig" testname="Unique ID" enabled="true">
           <stringProp name="variableName">uniqueId</stringProp>
           <stringProp name="outputFormat">0000000</stringProp>
