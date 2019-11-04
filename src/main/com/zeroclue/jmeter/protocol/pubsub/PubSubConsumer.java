@@ -10,13 +10,16 @@ import org.apache.jmeter.samplers.Entry;
 import org.apache.jmeter.samplers.Interruptible;
 import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.testelement.TestStateListener;
-import org.apache.jorphan.logging.LoggingManager;
-import org.apache.log.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class PubSubConsumer extends PubSubSampler implements Interruptible, TestStateListener {
+
+    private static final long serialVersionUID = 1L;
 
     private Subscriber consumer;
 
@@ -24,7 +27,7 @@ public class PubSubConsumer extends PubSubSampler implements Interruptible, Test
     private final static String PROJECT_ID = "PubSubConsumer.ProjectId";
     private final static String SUBSCRIPTION_NAME = "PubSubConsumer.SubscriptionName";
 
-    private static final Logger logger = LoggingManager.getLoggerForClass();
+    private static final Logger logger = LoggerFactory.getLogger(PubSubConsumer.class);
     public static final BlockingQueue<PubsubMessage> receivedMessages = new LinkedBlockingDeque<PubsubMessage>();
 
     public PubSubConsumer() {

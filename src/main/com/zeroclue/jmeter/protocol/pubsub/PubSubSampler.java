@@ -1,21 +1,14 @@
 package com.zeroclue.jmeter.protocol.pubsub;
 
-
-import org.apache.commons.lang3.StringUtils;
 import org.apache.jmeter.samplers.AbstractSampler;
 import org.apache.jmeter.testelement.ThreadListener;
-import org.apache.jorphan.logging.LoggingManager;
-import org.apache.log.Logger;
 
-import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class PubSubSampler extends AbstractSampler implements ThreadListener {
+
+    private static final long serialVersionUID = 1L;
 
     public static final int DEFAULT_TIMEOUT = 1000;
     public static final String DEFAULT_TIMEOUT_STRING = Integer.toString(DEFAULT_TIMEOUT);
@@ -26,7 +19,7 @@ public abstract class PubSubSampler extends AbstractSampler implements ThreadLis
     private static final String TIMEOUT = "PubSubSampler.Timeout";
     private static final String ITERATIONS = "PubSubSampler.Iterations";
 
-    private static final Logger log = LoggingManager.getLoggerForClass();
+    private static final Logger log = LoggerFactory.getLogger(PubSubSampler.class);
 
     @Override
     public void threadFinished() {

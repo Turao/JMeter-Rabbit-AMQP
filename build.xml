@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<project name="JMeter-AMQP-PubSub" default="package" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+<project name="JMeter-PubSub" default="package" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
   <description>
     To build JMeter-AMQP from source:
       ant 
@@ -74,7 +74,7 @@
 
     <mkdir dir="${dest.dir}"/>
 
-    <jar jarfile="${dest.dir}/JMeterAMQP-PubSub.jar"
+    <jar jarfile="${dest.dir}/JMeter-PubSub.jar"
         basedir="${build.dir}">
       <fileset dir="${build.dir}" includes="**/*.class" />
       <fileset dir="${src.dir}" includes="**/*.properties" />

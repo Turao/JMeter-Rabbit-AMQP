@@ -6,16 +6,17 @@
     </configurations>
     <dependencies>
         <dependency org="org.apache.commons" name="commons-lang3" rev="3.0" conf="build->default"/>
-        <dependency org="commons-io" name="commons-io" rev="1.4" conf="build->default"/>
-        <dependency org="commons-jexl" name="commons-jexl" rev="1.1" conf="build->default"/>
-        <dependency org="commons-codec" name="commons-codec" rev="1.4" conf="build->default"/>
-        <dependency org="commons-collections" name="commons-collections" rev="3.2.1" conf="build->default"/>
-        <dependency org="commons-httpclient" name="commons-httpclient" rev="3.1" conf="build->default"/>
-        <dependency org="commons-logging" name="commons-logging" rev="1.1.1" conf="build->default"/>
-        <dependency org="commons-net" name="commons-net" rev="1.4.1" conf="build->default"/>
-        <dependency org="org.apache.jmeter" name="jorphan" rev="2.6" conf="build->default"/>
-        <dependency org="avalon-logkit" name="avalon-logkit" rev="2.0" conf="build->default"/>
-        <dependency org="com.rabbitmq" name="amqp-client" rev="latest.integration" conf="build->default"/>
+        <dependency org="commons-io" name="commons-io" rev="latest.integration" conf="build->default"/>
+        <!-- <dependency org="commons-jexl" name="commons-jexl" rev="1.1" conf="build->default"/> -->
+        <!-- <dependency org="commons-codec" name="commons-codec" rev="1.4" conf="build->default"/> -->
+        <!-- <dependency org="commons-collections" name="commons-collections" rev="3.2.1" conf="build->default"/> -->
+        <!-- <dependency org="commons-httpclient" name="commons-httpclient" rev="3.1" conf="build->default"/> -->
+        <!-- <dependency org="commons-logging" name="commons-logging" rev="latest.integration" conf="build->default"/> -->
+        <!-- <dependency org="commons-net" name="commons-net" rev="1.4.1" conf="build->default"/> -->
+        <dependency org="org.apache.jmeter" name="jorphan" rev="latest.integration" conf="build->default"/>
+        <!-- <dependency org="avalon-logkit" name="avalon-logkit" rev="2.0" conf="build->default"/> -->
+        <!-- <dependency org="com.rabbitmq" name="amqp-client" rev="latest.integration" conf="build->default"/> -->
+        <dependency org="org.slf4j" name="slf4j-api" rev="latest.integration" conf="build->default"/>
         <dependency org="org.apache.jmeter" name="ApacheJMeter_core" rev="latest.integration" conf="build->default"/>
         <dependency org="com.google.cloud" name="google-cloud-pubsub" rev="latest.integration" conf="build->default"/>
     </dependencies>

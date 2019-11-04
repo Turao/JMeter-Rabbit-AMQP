@@ -3,9 +3,8 @@ package com.zeroclue.jmeter.protocol.pubsub.gui;
 import java.awt.Dimension;
 
 import javax.swing.*;
+import java.awt.*;
 
-import org.apache.jmeter.config.Arguments;
-import org.apache.jmeter.config.gui.ArgumentsPanel;
 import org.apache.jmeter.testelement.TestElement;
 import org.apache.jorphan.gui.JLabeledTextArea;
 import org.apache.jorphan.gui.JLabeledTextField;

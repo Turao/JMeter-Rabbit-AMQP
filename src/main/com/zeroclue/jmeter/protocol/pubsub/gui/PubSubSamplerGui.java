@@ -5,17 +5,18 @@ import org.apache.jmeter.gui.util.VerticalPanel;
 import org.apache.jmeter.samplers.gui.AbstractSamplerGui;
 import org.apache.jmeter.testelement.TestElement;
 import org.apache.jorphan.gui.JLabeledTextField;
-import org.apache.jorphan.logging.LoggingManager;
-import org.apache.log.Logger;
 
 import javax.swing.*;
 import java.awt.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class PubSubSamplerGui extends AbstractSamplerGui {
 
     private static final long serialVersionUID = 1L;
 
-    private static final Logger log = LoggingManager.getLoggerForClass();
+    private static final Logger log = LoggerFactory.getLogger(PubSubSampler.class);
 
     protected JLabeledTextField timeout = new JLabeledTextField("Timeout");
     private final JLabeledTextField iterations = new JLabeledTextField("Number of samples to Aggregate");
