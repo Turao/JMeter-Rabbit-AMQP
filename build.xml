@@ -54,6 +54,7 @@
       <echo>Resolving properties</echo>
       <ivy:resolve/>
       <ivy:cachepath pathid="lib.path.id" conf="build"/> 
+      <ivy:retrieve conf="build" pattern="lib/[conf]/[artifact](-[classifier]).[ext]" />
   </target>
   
   <target name="install-ivy" depends="download-ivy" description="Installing Ivy">
