@@ -78,6 +78,10 @@ public class PubSubPublisher extends PubSubSampler implements Interruptible {
                 futures.add(future);
             }
             ApiFutures.allAsList(futures).get(); // wait for all messages to be published
+            result.setResponseCodeOK();
+            result.setContentType(SampleResult.TEXT);
+            result.setResponseMessage(pubsubMessage.toString());
+            result.setSuccessful(true);
         } catch(Exception ex) {
             logger.debug(ex.getMessage(), ex);
             result.setResponseCode("500"); // internal error status
