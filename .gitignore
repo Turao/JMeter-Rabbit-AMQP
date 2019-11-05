@@ -4,12 +4,10 @@
 *\.sw[po]
 .DS_Store
 stats/
-target/
+target/classes/
 gc.log
-lib/
 /nbproject/private/
 /build/
-/dist/
 /ivy/
 *.iml
 .idea
